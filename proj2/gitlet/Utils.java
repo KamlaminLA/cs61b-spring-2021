@@ -17,6 +17,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Formatter;
 import java.util.List;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
 
 
 /** Assorted utilities.
@@ -234,6 +237,29 @@ class Utils {
      *  method, followed by a newline. */
     static void message(String msg, Object... args) {
         System.out.printf(msg, args);
+        System.out.println();
+    }
+
+    /** exist the program with error code 0 and print out the message */
+    public static void existWithError(String message) {
+        System.out.println(message);
+        System.exit(0);
+    }
+
+    /** validate if we have correct number of operands */
+    public static void validateOperand(String[] args, int n, String message) {
+        if (args.length != n) {
+            System.out.println(message);
+            System.exit(0);
+        }
+    }
+
+    /** print the log for specific commit */
+    public static void printCommit(Commit commit) {
+        System.out.println("===");
+        System.out.println("commit " + commit.getID());
+        System.out.println(commit.getTimeStamp());
+        System.out.println(commit.getMessage());
         System.out.println();
     }
 }

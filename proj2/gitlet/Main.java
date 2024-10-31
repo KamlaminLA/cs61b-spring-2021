@@ -1,5 +1,7 @@
 package gitlet;
 
+import java.rmi.server.RemoteRef;
+
 /** Driver class for Gitlet, a subset of the Git version-control system.
  *  @author TODO
  */
@@ -10,15 +12,36 @@ public class Main {
      */
     public static void main(String[] args) {
         // TODO: what if args is empty?
+        if (args.length == 0) {
+            Utils.existWithError("Please enter a command.");
+        }
+        // TODO: handle some failure case before process the args
         String firstArg = args[0];
         switch(firstArg) {
             case "init":
                 // TODO: handle the `init` command
+                Repository.init();
                 break;
             case "add":
                 // TODO: handle the `add [filename]` command
+                Utils.validateOperand(args, 2, "Incorrect operands.");
+                Repository.stageForAddition(args[1]);
                 break;
             // TODO: FILL THE REST IN
+            case "commit":
+                Utils.validateOperand(args, 2, "Please enter a commit message.");
+                Repository.createCommit(args[1]);
+                break;
+            case "rm":
+                Utils.validateOperand(args, 2, "Incorrect operands.");
+                Repository.stageForRemoval(args[1]);
+            case "log":
+                Utils.validateOperand(args, 1, "Incorrect operands.");
+                Repository.getLogs();
+            case "checkout":
+                Repository.checkout(args);
+            default:
+                Utils.existWithError("No command with that name exists.");
         }
     }
 }

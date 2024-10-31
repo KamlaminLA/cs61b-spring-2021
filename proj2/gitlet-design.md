@@ -1,15 +1,15 @@
 # Gitlet Design Document
 
 **Name**:
+Jinlin Deng
 
 ## Classes and Data Structures
 
-### Class 1
+### Commit
 
 #### Fields
-
-1. Field 1
-2. Field 2
+* private String message;
+* private Time timestamp
 
 
 ### Class 2
@@ -23,4 +23,9 @@
 ## Algorithms
 
 ## Persistence
+
+## Folder Structure
+* .gitlet
+
+
 
