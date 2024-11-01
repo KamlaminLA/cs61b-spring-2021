@@ -38,8 +38,10 @@ public class Main {
             case "log":
                 Utils.validateOperand(args, 1, "Incorrect operands.");
                 Repository.getLogs();
+                break;
             case "checkout":
                 Repository.checkout(args);
+                break;
             default:
                 Utils.existWithError("No command with that name exists.");
         }

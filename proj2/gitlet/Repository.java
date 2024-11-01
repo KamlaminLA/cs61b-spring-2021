@@ -136,7 +136,7 @@ public class Repository {
     public static void createCommit(String message) {
         StageArea stageArea = Utils.readObject(STAGING_AREA_FILE, StageArea.class);
         // handle the failure case
-        if (stageArea.getAdditionMap().isEmpty() || stageArea.getRemovalSet().isEmpty()) {
+        if (stageArea.getAdditionMap().isEmpty() && stageArea.getRemovalSet().isEmpty()) {
             System.out.println("No changes added to the commit.");
             System.exit(0);
         }

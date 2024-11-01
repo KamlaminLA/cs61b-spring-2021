@@ -52,6 +52,7 @@ public class Commit implements Serializable{
         this.parentID = parentID;
         this.fileMap = new HashMap<String, String>();
         setTimeStamp();
+        // FIX_ME!! something might wrong here, about serialization and UID
         this.id = Utils.sha1(Utils.serialize(this));
     }
 
@@ -60,7 +61,7 @@ public class Commit implements Serializable{
     }
 
     public void setID() {
-        this.id = Utils.sha1(this);
+        this.id = Utils.sha1(Utils.serialize(this));
     }
 
     /** save the commit to a file for future use */
