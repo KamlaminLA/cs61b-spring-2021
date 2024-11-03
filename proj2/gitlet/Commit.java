@@ -96,7 +96,7 @@ public class Commit implements Serializable{
         }
 
         // Define a formatter with the specified pattern
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss 'UTC,' EEEE, d MMMM yyyy");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("E MMM dd hh:mm:ss yyyy Z");
 
         // Format the dateTime object
         String formattedDate = dateTime.format(formatter);

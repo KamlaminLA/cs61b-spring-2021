@@ -258,7 +258,7 @@ class Utils {
     public static void printCommit(Commit commit) {
         System.out.println("===");
         System.out.println("commit " + commit.getID());
-        System.out.println(commit.getTimeStamp());
+        System.out.println("Date: " + commit.getTimeStamp());
         System.out.println(commit.getMessage());
         System.out.println();
     }
