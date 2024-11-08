@@ -35,12 +35,24 @@ public class Main {
             case "rm":
                 Utils.validateOperand(args, 2, "Incorrect operands.");
                 Repository.stageForRemoval(args[1]);
+                break;
             case "log":
                 Utils.validateOperand(args, 1, "Incorrect operands.");
                 Repository.getLogs();
                 break;
             case "checkout":
                 Repository.checkout(args);
+                break;
+            case "global-log":
+                Repository.getAllCommits();
+                break;
+            case "find":
+                Utils.validateOperand(args, 2, "Incorrect operands.");
+                Repository.findCommit(args[1]);
+                break;
+            case "status":
+                Utils.validateOperand(args, 1, "Incorrect operands.");
+                Repository.printStatus();
                 break;
             default:
                 Utils.existWithError("No command with that name exists.");

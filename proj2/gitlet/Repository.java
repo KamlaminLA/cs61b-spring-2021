@@ -2,9 +2,8 @@ package gitlet;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
 import static gitlet.Utils.*;
 
 // TODO: any imports you need here
@@ -167,7 +166,8 @@ public class Repository {
         stageArea.clear();
 
         // update the current branch to point the new commit
-        Utils.writeContents(MASTER_BRANCH, newCommit.getID());
+        File pathToWorkingBranch = Utils.join(CWD, Utils.readContentsAsString(HEAD_FILE));
+        Utils.writeContents(pathToWorkingBranch, newCommit.getID());
     }
 
     /** remove the file from addition area and if the file is tracked in
@@ -254,7 +254,102 @@ public class Repository {
                 throw new Error(e.getMessage());
             }
         } else {
-            
+            String branchName = args[1];
+            File pathToCheckoutBranch = Utils.join(BRANCH_DIR, branchName);
+            if (!pathToCheckoutBranch.exists()) {
+                existWithError("No such branch exists.");
+            }
+
+            File pathToCurrBranch = Utils.join(CWD, Utils.readContentsAsString(HEAD_FILE));
+            if (Utils.readContentsAsString(pathToCurrBranch).equals(Utils.readContentsAsString(pathToCheckoutBranch))) {
+                existWithError("No need to checkout the current branch.");
+            }
+
+            // retrieve all the files in CWD,
+            // an untracked file means those neither staged for addition nor tracked
+            // two cases: pop error if would be overwritten or keep it if not
+            Commit lastCommit = Commit.fromFile();
+            String checkoutCommitID = Utils.readContentsAsString(pathToCheckoutBranch);
+            Commit checkoutCommit = Utils.readObject(Utils.join(COMMIT_DIR, checkoutCommitID), Commit.class);
+            List<String> allFilesInCWD = Utils.plainFilenamesIn(CWD);
+            Set<String> untrackFiles = new HashSet<>();
+            for (String fileName : allFilesInCWD) {
+                if (!lastCommit.getFileMap().containsKey(fileName)) {
+                    if (checkoutCommit.getFileMap().containsKey(fileName)) {
+                        Utils.existWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+                    } else {
+                        untrackFiles.add(fileName);
+                    }
+                }
+            }
+
         }
+    }
+
+    // global-log, like the log command but list all the commits
+    public static void getAllCommits() {
+        List<String> allCommit = Utils.plainFilenamesIn(COMMIT_DIR);
+        for (String fileName : allCommit) {
+            File pathToCommit = Utils.join(COMMIT_DIR, fileName);
+            Commit commit = Utils.readObject(pathToCommit, Commit.class);
+            Utils.printCommit(commit);
+        }
+    }
+
+    // find all commits that has same message
+    public static void findCommit(String message) {
+        List<String> allCommit = Utils.plainFilenamesIn(COMMIT_DIR);
+        boolean find = false;
+        for (String fileName : allCommit) {
+            File pathToCommit = Utils.join(COMMIT_DIR, fileName);
+            Commit commit = Utils.readObject(pathToCommit, Commit.class);
+            if (commit.getMessage().equals(message)) {
+                System.out.println(commit.getID());
+                find = true;
+            }
+        }
+        if (!find) {
+            System.out.println("Found no commit with that message.");
+        }
+    }
+
+    // print the status of current git repo
+    public static void printStatus() {
+        System.out.println("=== Branches ===");
+        List<String> branchesList = Utils.plainFilenamesIn(BRANCH_DIR);
+        // FIX_ME
+        for (String branch : branchesList) {
+            System.out.println(branch);
+        }
+        System.out.println();
+
+        System.out.println("=== Staged Files ===");
+        StageArea stageArea = Utils.readObject(STAGING_AREA_FILE, StageArea.class);
+        List<String> filesList = new ArrayList<>();
+        for (String fileName : stageArea.getAdditionMap().keySet()) {
+            filesList.add(fileName);
+        }
+        Collections.sort(filesList);
+        for (String fileName : filesList) {
+            System.out.println(fileName);
+        }
+        System.out.println();
+
+        System.out.println("=== Removed Files ===");
+        List<String> removalList = new ArrayList<>();
+        for (String fileName : stageArea.getRemovalSet()) {
+            removalList.add(fileName);
+        }
+        Collections.sort(removalList);
+        for (String fileName : removalList) {
+            System.out.println(fileName);
+        }
+        System.out.println();
+
+        System.out.println("=== Modifications Not Staged For Commit ===");
+        System.out.println();
+
+        System.out.println("=== Untracked Files ===");
+        System.out.println();
     }
 }
