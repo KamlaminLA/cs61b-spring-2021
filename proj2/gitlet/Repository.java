@@ -100,7 +100,7 @@ public class Repository {
         // check to see if this file is exist as same in last commit
         // if yes, do nothing and also remove it from addition area if exist
         // also, remove it from removal area if exist
-        // FIX_ME!!!
+
         byte[] blob = Utils.readContents(filePath);
         String UID = Utils.sha1(blob);
         Commit lastCommit = Commit.fromFile();
@@ -272,16 +272,32 @@ public class Repository {
             String checkoutCommitID = Utils.readContentsAsString(pathToCheckoutBranch);
             Commit checkoutCommit = Utils.readObject(Utils.join(COMMIT_DIR, checkoutCommitID), Commit.class);
             List<String> allFilesInCWD = Utils.plainFilenamesIn(CWD);
-            Set<String> untrackFiles = new HashSet<>();
             for (String fileName : allFilesInCWD) {
                 if (!lastCommit.getFileMap().containsKey(fileName)) {
                     if (checkoutCommit.getFileMap().containsKey(fileName)) {
                         Utils.existWithError("There is an untracked file in the way; delete it, or add and commit it first.");
-                    } else {
-                        untrackFiles.add(fileName);
                     }
                 }
             }
+
+            // if the files is tracked in curr branch but not in checkout branch, remove it
+            for (String fileName : lastCommit.getFileMap().keySet()) {
+                File trackedFilePath = Utils.join(CWD, fileName);
+                if (!checkoutCommit.getFileMap().containsKey(fileName)) {
+                    if (trackedFilePath.exists()) {
+                        trackedFilePath.delete();
+                    }
+                }
+            }
+
+            // checkout all the files in head commit in checkout branch
+            for (String fileName : checkoutCommit.getFileMap().keySet()) {
+                String[] input = new String[]{checkoutCommitID, fileName};
+                checkout(input);
+            }
+
+            // change HEAD pointer
+            Utils.writeContents(HEAD_FILE, ".gitlet/refs/heads/" + branchName);
 
         }
     }
@@ -317,9 +333,20 @@ public class Repository {
     public static void printStatus() {
         System.out.println("=== Branches ===");
         List<String> branchesList = Utils.plainFilenamesIn(BRANCH_DIR);
-        // FIX_ME
-        for (String branch : branchesList) {
-            System.out.println(branch);
+        if (branchesList.size() == 1) {
+            System.out.println("*" + branchesList.get(0));
+        } else {
+            String branch1 = branchesList.get(0);
+            String branch2 = branchesList.get(1);
+            File currBranchPath = Utils.join(CWD, Utils.readContentsAsString(HEAD_FILE));
+            String currHeadID = Utils.readContentsAsString(currBranchPath);
+            if (Utils.readContentsAsString(Utils.join(BRANCH_DIR, branch1)).equals(currHeadID)) {
+                System.out.println("*" + branch1);
+                System.out.println(branch2);
+            } else {
+                System.out.println("*" + branch2);
+                System.out.println(branch1);
+            }
         }
         System.out.println();
 
