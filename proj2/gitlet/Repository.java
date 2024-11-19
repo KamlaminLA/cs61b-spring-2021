@@ -133,6 +133,9 @@ public class Repository {
      * Removal: 1. File in removal area will be untracked in the new commit
      */
     public static void createCommit(String message) {
+        if (message.isEmpty()) {
+            Utils.existWithError("Please enter a commit message.");
+        }
         StageArea stageArea = Utils.readObject(STAGING_AREA_FILE, StageArea.class);
         // handle the failure case
         if (stageArea.getAdditionMap().isEmpty() && stageArea.getRemovalSet().isEmpty()) {

@@ -38,7 +38,7 @@ public class StageArea implements Serializable {
     }
 
     public void addToRemoval(String fileName) {
-        removalSet.remove(fileName);
+        removalSet.add(fileName);
         saveStage();
     }
     public void removeFromAddition(String fileName) {
