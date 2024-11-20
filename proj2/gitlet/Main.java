@@ -54,6 +54,18 @@ public class Main {
                 Utils.validateOperand(args, 1, "Incorrect operands.");
                 Repository.printStatus();
                 break;
+            case "branch":
+                Utils.validateOperand(args, 2, "Incorrect operands");
+                Repository.addBranch(args[1]);
+                break;
+            case "rm-branch":
+                Utils.validateOperand(args, 2, "Incorrect operands");
+                Repository.removeBranch(args[1]);
+                break;
+            case "reset":
+                Utils.validateOperand(args, 2, "Incorrect operands");
+                Repository.reset(args[1]);
+                break;
             default:
                 Utils.existWithError("No command with that name exists.");
         }

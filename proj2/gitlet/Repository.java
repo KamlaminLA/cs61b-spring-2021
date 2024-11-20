@@ -295,7 +295,7 @@ public class Repository {
 
             // checkout all the files in head commit in checkout branch
             for (String fileName : checkoutCommit.getFileMap().keySet()) {
-                String[] input = new String[]{checkoutCommitID, fileName};
+                String[] input = new String[]{"checkout", checkoutCommitID, "--", fileName};
                 checkout(input);
             }
 
@@ -381,5 +381,61 @@ public class Repository {
 
         System.out.println("=== Untracked Files ===");
         System.out.println();
+    }
+
+    // create a new branch with the given name
+    public static void addBranch(String branchName) {
+        File newBranch = join(BRANCH_DIR, branchName);
+        if (newBranch.exists()) {
+            Utils.existWithError("A branch with that name already exists.");
+        }
+        try {
+            newBranch.createNewFile();
+        } catch (IOException e) {
+            throw new Error(e.getMessage());
+        }
+        File workingBranch = Utils.join(CWD, Utils.readContentsAsString(HEAD_FILE));
+        String currHeadCommitID = Utils.readContentsAsString(workingBranch);
+        Utils.writeContents(newBranch, currHeadCommitID);
+    }
+
+    // remove a branch with the given name
+    public static void removeBranch(String branchName) {
+        File deletedBranch = join(BRANCH_DIR, branchName);
+        if (!deletedBranch.exists()) {
+            Utils.existWithError("AA branch with that name does not exist.");
+        }
+        File workingBranch = Utils.join(CWD, Utils.readContentsAsString(HEAD_FILE));
+        String currHeadCommitID = Utils.readContentsAsString(workingBranch);
+        if (Utils.readContentsAsString(deletedBranch).equals(currHeadCommitID)) {
+            Utils.existWithError("Cannot remove the current branch.");
+        }
+        deletedBranch.delete();
+    }
+
+    // check out all files tracked by the given commit
+    public static void reset(String commitID) {
+        if (!Utils.join(COMMIT_DIR, commitID).exists()) {
+            Utils.existWithError("No commit with that id exists.");
+        }
+        Commit checkOutCommit = Utils.readObject(Utils.join(COMMIT_DIR, commitID), Commit.class);
+        Commit currentCommit = Commit.fromFile();
+        List<String> filesInCWD = Utils.plainFilenamesIn(CWD);
+        for (String fileName : filesInCWD) {
+            // untracked file
+            if (!currentCommit.getFileMap().containsKey(fileName)) {
+                if (checkOutCommit.getFileMap().containsKey(fileName)) {
+                    Utils.existWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+                }
+            } else {
+                // delete all tracked file in current
+                File fileToBeDelete = Utils.join(CWD, fileName);
+                fileToBeDelete.delete();
+            }
+        }
+        // now we can check out all files that in given commit
+        for (String fileName : checkOutCommit.getFileMap().keySet()) {
+            checkout(new String[]{"checkout", commitID, "--", fileName});
+        }
     }
 }
