@@ -262,4 +262,11 @@ class Utils {
         System.out.println(commit.getMessage());
         System.out.println();
     }
+
+    /** check if the Gitlet directory get initialized */
+    public static void checkInitialized() {
+        if (!Repository.GITLET_DIR.exists()) {
+            Utils.existWithError("Not in an initialized Gitlet directory.");
+        }
+    }
 }

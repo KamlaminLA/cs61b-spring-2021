@@ -24,45 +24,56 @@ public class Main {
                 break;
             case "add":
                 // TODO: handle the `add [filename]` command
+                Utils.checkInitialized();
                 Utils.validateOperand(args, 2, "Incorrect operands.");
                 Repository.stageForAddition(args[1]);
                 break;
             // TODO: FILL THE REST IN
             case "commit":
+                Utils.checkInitialized();
                 Utils.validateOperand(args, 2, "Please enter a commit message.");
                 Repository.createCommit(args[1]);
                 break;
             case "rm":
+                Utils.checkInitialized();
                 Utils.validateOperand(args, 2, "Incorrect operands.");
                 Repository.stageForRemoval(args[1]);
                 break;
             case "log":
+                Utils.checkInitialized();
                 Utils.validateOperand(args, 1, "Incorrect operands.");
                 Repository.getLogs();
                 break;
             case "checkout":
+                Utils.checkInitialized();
                 Repository.checkout(args);
                 break;
             case "global-log":
+                Utils.checkInitialized();
                 Repository.getAllCommits();
                 break;
             case "find":
+                Utils.checkInitialized();
                 Utils.validateOperand(args, 2, "Incorrect operands.");
                 Repository.findCommit(args[1]);
                 break;
             case "status":
+                Utils.checkInitialized();
                 Utils.validateOperand(args, 1, "Incorrect operands.");
                 Repository.printStatus();
                 break;
             case "branch":
+                Utils.checkInitialized();
                 Utils.validateOperand(args, 2, "Incorrect operands");
                 Repository.addBranch(args[1]);
                 break;
             case "rm-branch":
+                Utils.checkInitialized();
                 Utils.validateOperand(args, 2, "Incorrect operands");
                 Repository.removeBranch(args[1]);
                 break;
             case "reset":
+                Utils.checkInitialized();
                 Utils.validateOperand(args, 2, "Incorrect operands");
                 Repository.reset(args[1]);
                 break;
