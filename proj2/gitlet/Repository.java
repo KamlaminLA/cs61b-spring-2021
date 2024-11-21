@@ -226,6 +226,9 @@ public class Repository {
         // 3 cases
         int argsLength = args.length;
         if (argsLength == 3) {
+            if(!args[1].equals("--")) {
+                Utils.existWithError("Incorrect operands.");
+            }
             Commit lastCommit = Commit.fromFile();
             if (!lastCommit.getFileMap().containsKey(args[2])) {
                 Utils.existWithError("File does not exist in that commit.");
@@ -240,6 +243,9 @@ public class Repository {
                 }
             }
         } else if (argsLength == 4) {
+            if(!args[2].equals("--")) {
+                Utils.existWithError("Incorrect operands.");
+            }
             File pathToSpecificCommit = Utils.join(COMMIT_DIR, args[1]);
             if (!pathToSpecificCommit.exists()) {
                 existWithError("No commit with that id exists.");
@@ -264,7 +270,9 @@ public class Repository {
             }
 
             File pathToCurrBranch = Utils.join(CWD, Utils.readContentsAsString(HEAD_FILE));
-            if (Utils.readContentsAsString(pathToCurrBranch).equals(Utils.readContentsAsString(pathToCheckoutBranch))) {
+            String s1 = Utils.readContentsAsString(HEAD_FILE);
+            String s2 = ".gitlet/refs/heads/" + branchName;
+            if (s1.equals(s2)) {
                 existWithError("No need to checkout the current branch.");
             }
 
