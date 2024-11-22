@@ -247,10 +247,10 @@ public class Repository {
                 Utils.existWithError("Incorrect operands.");
             }
             String id = args[1];
-            if (id.length() == 6) {
+            if (id.length() != 40) {
                 List<String> allCommitID = Utils.plainFilenamesIn(COMMIT_DIR);
                 for (String s : allCommitID) {
-                    if (s.substring(0, 6).equals(id)) {
+                    if (s.substring(0, id.length()).equals(id)) {
                         id = s;
                         break;
                     }
@@ -455,6 +455,9 @@ public class Repository {
         for (String fileName : checkOutCommit.getFileMap().keySet()) {
             checkout(new String[]{"checkout", commitID, "--", fileName});
         }
+        // move the curr branch head to point the given commit
+        File pathToCurrBranch = Utils.join(CWD, Utils.readContentsAsString(HEAD_FILE));
+        Utils.writeContents(pathToCurrBranch, commitID);
         // clean the stage area
         StageArea stageArea = Utils.readObject(STAGING_AREA_FILE, StageArea.class);
         stageArea.clear();
