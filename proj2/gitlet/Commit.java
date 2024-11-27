@@ -32,6 +32,8 @@ public class Commit implements Serializable{
     /** Parent ID */
     private final String parentID;
 
+    private String secondParentID;
+
     /** this commit' ID */
     private String id;
 
@@ -54,6 +56,15 @@ public class Commit implements Serializable{
         setTimeStamp();
         // FIX_ME!! something might wrong here, about serialization and UID
         this.id = Utils.sha1(Utils.serialize(this));
+
+    }
+
+    public void setSecondParentID(String secondID) {
+        this.secondParentID = secondID;
+    }
+
+    public String getSecondParentID() {
+        return secondParentID;
     }
 
     public String getParentID() {

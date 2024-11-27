@@ -173,6 +173,49 @@ public class Repository {
         Utils.writeContents(pathToWorkingBranch, newCommit.getID());
     }
 
+    /** create commit with two parent */
+    public static void createCommitWithTwoParent(String message, String secondParentID) {
+        if (message.isEmpty()) {
+            Utils.existWithError("Please enter a commit message.");
+        }
+        StageArea stageArea = Utils.readObject(STAGING_AREA_FILE, StageArea.class);
+        // handle the failure case
+        if (stageArea.getAdditionMap().isEmpty() && stageArea.getRemovalSet().isEmpty()) {
+            System.out.println("No changes added to the commit.");
+            System.exit(0);
+        }
+
+        // create a new commit and set last commit as its parent
+        Commit lastCommit = Commit.fromFile();
+        Commit newCommit = new Commit(message, lastCommit.getID());
+        newCommit.setSecondParentID(secondParentID);
+        newCommit.setFileMap(new HashMap<>(lastCommit.getFileMap()));
+
+        // add, remove or modify the fileMap
+        Map<String, String> fileMap = newCommit.getFileMap();
+        Map<String, String> additionArea = stageArea.getAdditionMap();
+        Set<String> removalArea = stageArea.getRemovalSet();
+        for (String key : additionArea.keySet()) {
+            fileMap.put(key, additionArea.get(key));
+        }
+        for (String key : removalArea) {
+            if (fileMap.containsKey(key)) {
+                fileMap.remove(key);
+            }
+        }
+
+        // update the UID and then save this commit
+        newCommit.setID();
+        newCommit.saveCommit();
+
+        // clean the stage area
+        stageArea.clear();
+
+        // update the current branch to point the new commit
+        File pathToWorkingBranch = Utils.join(CWD, Utils.readContentsAsString(HEAD_FILE));
+        Utils.writeContents(pathToWorkingBranch, newCommit.getID());
+    }
+
     /** remove the file from addition area and if the file is tracked in
      * current commit, we will stage it for removal and delete it from user's working dir
      */
@@ -505,6 +548,14 @@ public class Repository {
             temp = parent;
         }
 
+        temp = currentCommit;
+        while (temp.getSecondParentID() != null) {
+            File pathToParentFile = Utils.join(COMMIT_DIR, temp.getSecondParentID());
+            Commit parent = Utils.readObject(pathToParentFile, Commit.class);
+            currBranchCommitSet.add(parent.getID());
+            temp = parent;
+        }
+
         temp = givenBranchHeadCommit;
         if (currBranchCommitSet.contains(temp.getID())) {
             splitPoint = temp.getID();
@@ -576,18 +627,17 @@ public class Repository {
                     }
                 }
             }
-
-            // check the tracked files in given branch
-            for (String fileInGivenBranch : givenBranchMap.keySet()) {
-                if (!splitPointMap.containsKey(fileInGivenBranch)) {
-                    checkout(new String[]{"checkout", givenBranchHeadCommitID, "--", fileInGivenBranch});
-                    stageArea.addToAddition(fileInGivenBranch, givenBranchMap.get(fileInGivenBranch));
-                }
-            }
-
-            // create a new commit
-            String[] currBranchPath = readContentsAsString(HEAD_FILE).split("/");
-            createCommit("Merged " + givenBranch + " into " + currBranchPath[3] + ".");
         }
+        // check the tracked files in given branch
+        for (String fileInGivenBranch : givenBranchMap.keySet()) {
+            if (!splitPointMap.containsKey(fileInGivenBranch)) {
+                checkout(new String[]{"checkout", givenBranchHeadCommitID, "--", fileInGivenBranch});
+                stageArea.addToAddition(fileInGivenBranch, givenBranchMap.get(fileInGivenBranch));
+            }
+        }
+
+        // create a new commit
+        String[] currBranchPath = readContentsAsString(HEAD_FILE).split("/");
+        createCommitWithTwoParent("Merged " + givenBranch + " into " + currBranchPath[3] + ".", givenBranchHeadCommitID);
     }
 }
