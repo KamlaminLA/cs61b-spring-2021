@@ -667,11 +667,10 @@ public class Repository {
     }
 
     private static void updateConflictFile(File filePath, byte[] currContent, byte[] givenContent) {
-        writeContents(filePath, "<<<<<<< HEAD\n");
-        writeContents(filePath, currContent);
-        writeContents(filePath,"=======\n");
-        writeContents(filePath ,givenContent);
-        writeContents(filePath,">>>>>>>");
-
+        writeContents(filePath, "<<<<<<< HEAD\n", currContent);
+        String prevContent = readContentsAsString(filePath);
+        writeContents(filePath,prevContent, "=======\n");
+        prevContent = readContentsAsString(filePath);
+        writeContents(filePath ,prevContent, givenContent, ">>>>>>>");
     }
 }
