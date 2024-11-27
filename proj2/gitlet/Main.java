@@ -77,6 +77,11 @@ public class Main {
                 Utils.validateOperand(args, 2, "Incorrect operands");
                 Repository.reset(args[1]);
                 break;
+            case "merge":
+                Utils.checkInitialized();
+                Utils.validateOperand(args, 2, "Incorrect operands");
+
+                break;
             default:
                 Utils.existWithError("No command with that name exists.");
         }

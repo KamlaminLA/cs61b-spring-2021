@@ -462,4 +462,132 @@ public class Repository {
         StageArea stageArea = Utils.readObject(STAGING_AREA_FILE, StageArea.class);
         stageArea.clear();
     }
+
+    // This is our "lovely" merge command
+    public static void merge(String givenBranch) {
+        StageArea stageArea = Utils.readObject(STAGING_AREA_FILE, StageArea.class);
+        // staging area not clean
+        if (!stageArea.getAdditionMap().isEmpty() || !stageArea.getRemovalSet().isEmpty()) {
+            Utils.existWithError("You have uncommitted changes.");
+        }
+        // given branch not exist
+        if (!Utils.join(BRANCH_DIR, givenBranch).exists()) {
+            Utils.existWithError("A branch with that name does not exist.");
+        }
+        // merge with itself
+        String nameOfTheGivenBranch = ".gitlet/refs/heads/" + givenBranch;
+        if (Utils.readContentsAsString(HEAD_FILE).equals(nameOfTheGivenBranch)) {
+            Utils.existWithError("Cannot merge a branch with itself.");
+        }
+        // there is some untracked file in CWD and will be overwritten or deleted by the merge
+        String givenBranchHeadCommitID = Utils.readContentsAsString(Utils.join(BRANCH_DIR, givenBranch));
+        Commit givenBranchHeadCommit = Utils.readObject(Utils.join(COMMIT_DIR, givenBranchHeadCommitID), Commit.class);
+        Commit currentCommit = Commit.fromFile();
+        List<String> filesInCWD = Utils.plainFilenamesIn(CWD);
+        for (String fileName : filesInCWD) {
+            // untracked file
+            if (!currentCommit.getFileMap().containsKey(fileName)) {
+                if (givenBranchHeadCommit.getFileMap().containsKey(fileName)) {
+                    Utils.existWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+                }
+            }
+        }
+
+        // find the split point
+        String splitPoint = "";
+        Set<String> currBranchCommitSet = new HashSet<>();
+        Commit temp = currentCommit;
+        currBranchCommitSet.add(temp.getID());
+        while (temp.getParentID() != null) {
+            File pathToParentFile = Utils.join(COMMIT_DIR, temp.getParentID());
+            Commit parent = Utils.readObject(pathToParentFile, Commit.class);
+            currBranchCommitSet.add(parent.getID());
+            temp = parent;
+        }
+
+        temp = givenBranchHeadCommit;
+        if (currBranchCommitSet.contains(temp.getID())) {
+            splitPoint = temp.getID();
+        } else {
+            while (temp.getParentID() != null) {
+                File pathToParentFile = Utils.join(COMMIT_DIR, temp.getParentID());
+                Commit parent = Utils.readObject(pathToParentFile, Commit.class);
+                if (currBranchCommitSet.contains(parent.getID())) {
+                    splitPoint = parent.getID();
+                    break;
+                }
+                temp = parent;
+            }
+        }
+
+        // if the splitPoint is current branch or the splitPoint is the same commit
+        // as the given branch
+        if (splitPoint.equals(currentCommit.getID())) {
+            checkout(new String[]{"checkout", givenBranch});
+            System.out.println("Current branch fast-forwarded.");
+            return;
+        } else if (splitPoint.equals(givenBranchHeadCommitID)) {
+            System.out.println("Given branch is an ancestor of the current branch.");
+            return;
+        }
+
+        // handle the files before merge
+        Commit splitCommit = Utils.readObject(Utils.join(COMMIT_DIR, splitPoint), Commit.class);
+        Map<String, String> splitPointMap = splitCommit.getFileMap();
+        Map<String, String> currBranchMap = currentCommit.getFileMap();
+        Map<String, String> givenBranchMap = givenBranchHeadCommit.getFileMap();
+        for (String fileInCurrBranch : currBranchMap.keySet()) {
+            if (givenBranchMap.containsKey(fileInCurrBranch)) {
+                // case c
+                if (givenBranchMap.get(fileInCurrBranch).equals(currBranchMap.get(fileInCurrBranch))) {
+                    continue;
+                }
+                // case a
+                if (!givenBranchMap.get(fileInCurrBranch).equals(splitPointMap.get(fileInCurrBranch))) {
+                    if (currBranchMap.get(fileInCurrBranch).equals(splitPointMap.get(fileInCurrBranch))) {
+                        checkout(new String[]{"checkout", givenBranchHeadCommitID, "--", fileInCurrBranch});
+                        stageArea.addToAddition(fileInCurrBranch, givenBranchMap.get(fileInCurrBranch));
+                        continue;
+                    }
+                }
+                // case b
+                if (givenBranchMap.get(fileInCurrBranch).equals(splitPointMap.get(fileInCurrBranch))) {
+                    if (!currBranchMap.get(fileInCurrBranch).equals(splitPointMap.get(fileInCurrBranch))) {
+                        continue;
+                    }
+                }
+                // case f
+                if (!currBranchMap.get(fileInCurrBranch).equals(splitPointMap.get(fileInCurrBranch))) {
+                    if (!givenBranchMap.get(fileInCurrBranch).equals(splitPointMap.get(fileInCurrBranch))) {
+                        // CONFLICT HERE
+                        continue;
+                    }
+                }
+                // file not in given branch
+            } else {
+                // case d
+                if (!splitPointMap.containsKey(fileInCurrBranch)) {
+                    continue;
+                } else {
+                    if (currBranchMap.get(fileInCurrBranch).equals(splitPointMap.get(fileInCurrBranch))) {
+                        File currFilePath = join(CWD, fileInCurrBranch);
+                        currFilePath.delete();
+                        stageArea.addToRemoval(fileInCurrBranch);
+                    }
+                }
+            }
+
+            // check the tracked files in given branch
+            for (String fileInGivenBranch : givenBranchMap.keySet()) {
+                if (!splitPointMap.containsKey(fileInGivenBranch)) {
+                    checkout(new String[]{"checkout", givenBranchHeadCommitID, "--", fileInGivenBranch});
+                    stageArea.addToAddition(fileInGivenBranch, givenBranchMap.get(fileInGivenBranch));
+                }
+            }
+
+            // create a new commit
+            String[] currBranchPath = readContentsAsString(HEAD_FILE).split("/");
+            createCommit("Merged " + givenBranch + " into " + currBranchPath[3] + ".");
+        }
+    }
 }
