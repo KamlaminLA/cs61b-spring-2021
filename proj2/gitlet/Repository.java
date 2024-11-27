@@ -634,7 +634,7 @@ public class Repository {
                     } else {
                         File currBranchBlob = join(BLOB_DIR, currBranchMap.get(fileInCurrBranch));
                         byte[] contentInCurr = readContents(currBranchBlob);
-                        updateConflictFile(conflictFilePath, contentInCurr, new byte[]);
+                        updateConflictFile(conflictFilePath, contentInCurr, new byte[0]);
                         isConflict = true;
                     }
                 }
@@ -651,7 +651,7 @@ public class Repository {
                     if (!givenBranchMap.get(fileInGivenBranch).equals(splitPointMap.get(fileInGivenBranch))) {
                         File givenBranchBlob = join(BLOB_DIR, givenBranchMap.get(fileInGivenBranch));
                         byte[] contentInGiven = readContents(givenBranchBlob);
-                        updateConflictFile(conflictFilePath, new byte[], contentInGiven);
+                        updateConflictFile(conflictFilePath, new byte[0], contentInGiven);
                         isConflict = true;
                     }
                 }
