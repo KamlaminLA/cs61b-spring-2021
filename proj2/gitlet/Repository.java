@@ -509,6 +509,7 @@ public class Repository {
     // This is our "lovely" merge command
     public static void merge(String givenBranch) {
         StageArea stageArea = Utils.readObject(STAGING_AREA_FILE, StageArea.class);
+        boolean isConflict = false;
         // staging area not clean
         if (!stageArea.getAdditionMap().isEmpty() || !stageArea.getRemovalSet().isEmpty()) {
             Utils.existWithError("You have uncommitted changes.");
@@ -588,6 +589,7 @@ public class Repository {
         Map<String, String> currBranchMap = currentCommit.getFileMap();
         Map<String, String> givenBranchMap = givenBranchHeadCommit.getFileMap();
         for (String fileInCurrBranch : currBranchMap.keySet()) {
+            File conflictFilePath = join(CWD, fileInCurrBranch);
             if (givenBranchMap.containsKey(fileInCurrBranch)) {
                 // case c
                 if (givenBranchMap.get(fileInCurrBranch).equals(currBranchMap.get(fileInCurrBranch))) {
@@ -611,7 +613,12 @@ public class Repository {
                 if (!currBranchMap.get(fileInCurrBranch).equals(splitPointMap.get(fileInCurrBranch))) {
                     if (!givenBranchMap.get(fileInCurrBranch).equals(splitPointMap.get(fileInCurrBranch))) {
                         // CONFLICT HERE
-                        continue;
+                        File currBranchBlob = join(BLOB_DIR, currBranchMap.get(fileInCurrBranch));
+                        byte[] contentInCurr = readContents(currBranchBlob);
+                        File givenBranchBlob = join(BLOB_DIR, givenBranchMap.get(fileInCurrBranch));
+                        byte[] contentInGiven = readContents(givenBranchBlob);
+                        updateConflictFile(conflictFilePath, contentInCurr, contentInGiven);
+                        isConflict = true;
                     }
                 }
                 // file not in given branch
@@ -624,20 +631,47 @@ public class Repository {
                         File currFilePath = join(CWD, fileInCurrBranch);
                         currFilePath.delete();
                         stageArea.addToRemoval(fileInCurrBranch);
+                    } else {
+                        File currBranchBlob = join(BLOB_DIR, currBranchMap.get(fileInCurrBranch));
+                        byte[] contentInCurr = readContents(currBranchBlob);
+                        updateConflictFile(conflictFilePath, contentInCurr, new byte[]);
+                        isConflict = true;
                     }
                 }
             }
         }
         // check the tracked files in given branch
         for (String fileInGivenBranch : givenBranchMap.keySet()) {
+            File conflictFilePath = join(CWD, fileInGivenBranch);
             if (!splitPointMap.containsKey(fileInGivenBranch)) {
                 checkout(new String[]{"checkout", givenBranchHeadCommitID, "--", fileInGivenBranch});
                 stageArea.addToAddition(fileInGivenBranch, givenBranchMap.get(fileInGivenBranch));
+            } else {
+                if (!currBranchMap.containsKey(fileInGivenBranch)) {
+                    if (!givenBranchMap.get(fileInGivenBranch).equals(splitPointMap.get(fileInGivenBranch))) {
+                        File givenBranchBlob = join(BLOB_DIR, givenBranchMap.get(fileInGivenBranch));
+                        byte[] contentInGiven = readContents(givenBranchBlob);
+                        updateConflictFile(conflictFilePath, new byte[], contentInGiven);
+                        isConflict = true;
+                    }
+                }
             }
         }
 
         // create a new commit
         String[] currBranchPath = readContentsAsString(HEAD_FILE).split("/");
         createCommitWithTwoParent("Merged " + givenBranch + " into " + currBranchPath[3] + ".", givenBranchHeadCommitID);
+        if (isConflict) {
+            System.out.println("Encountered a merge conflict.");
+        }
+    }
+
+    private static void updateConflictFile(File filePath, byte[] currContent, byte[] givenContent) {
+        writeContents(filePath, "<<<<<<< HEAD\n");
+        writeContents(filePath, currContent, "\n");
+        writeContents(filePath,"=======\n");
+        writeContents(filePath ,givenContent, "\n");
+        writeContents(filePath,">>>>>>>");
+
     }
 }
