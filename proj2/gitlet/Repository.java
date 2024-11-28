@@ -510,6 +510,7 @@ public class Repository {
     public static void merge(String givenBranch) {
         StageArea stageArea = Utils.readObject(STAGING_AREA_FILE, StageArea.class);
         boolean isConflict = false;
+        String conflictFile = "";
         // staging area not clean
         if (!stageArea.getAdditionMap().isEmpty() || !stageArea.getRemovalSet().isEmpty()) {
             Utils.existWithError("You have uncommitted changes.");
@@ -619,6 +620,7 @@ public class Repository {
                         String contentInGiven = readContentsAsString(givenBranchBlob);
                         updateConflictFile(conflictFilePath, contentInCurr, contentInGiven, fileInCurrBranch);
                         isConflict = true;
+                        conflictFile = fileInCurrBranch;
                     }
                 }
                 // file not in given branch
@@ -660,6 +662,9 @@ public class Repository {
 
         // create a new commit
         String[] currBranchPath = readContentsAsString(HEAD_FILE).split("/");
+        if (isConflict) {
+            stageArea.addToAddition(conflictFile, sha1(readContents(join(CWD, conflictFile))));
+        }
         createCommitWithTwoParent("Merged " + givenBranch + " into " + currBranchPath[3] + ".", givenBranchHeadCommitID);
         if (isConflict) {
             System.out.println("Encountered a merge conflict.");
