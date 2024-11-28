@@ -617,7 +617,7 @@ public class Repository {
                         String contentInCurr = readContentsAsString(currBranchBlob);
                         File givenBranchBlob = join(BLOB_DIR, givenBranchMap.get(fileInCurrBranch));
                         String contentInGiven = readContentsAsString(givenBranchBlob);
-                        updateConflictFile(conflictFilePath, contentInCurr, contentInGiven);
+                        updateConflictFile(conflictFilePath, contentInCurr, contentInGiven, fileInCurrBranch);
                         isConflict = true;
                     }
                 }
@@ -634,7 +634,7 @@ public class Repository {
                     } else {
                         File currBranchBlob = join(BLOB_DIR, currBranchMap.get(fileInCurrBranch));
                         String contentInCurr = readContentsAsString(currBranchBlob);
-                        updateConflictFile(conflictFilePath, contentInCurr, "");
+                        updateConflictFile(conflictFilePath, contentInCurr, "", fileInCurrBranch);
                         isConflict = true;
                     }
                 }
@@ -651,7 +651,7 @@ public class Repository {
                     if (!givenBranchMap.get(fileInGivenBranch).equals(splitPointMap.get(fileInGivenBranch))) {
                         File givenBranchBlob = join(BLOB_DIR, givenBranchMap.get(fileInGivenBranch));
                         String contentInGiven = readContentsAsString(givenBranchBlob);
-                        updateConflictFile(conflictFilePath, "", contentInGiven);
+                        updateConflictFile(conflictFilePath, "", contentInGiven, fileInGivenBranch);
                         isConflict = true;
                     }
                 }
@@ -666,7 +666,9 @@ public class Repository {
         }
     }
 
-    private static void updateConflictFile(File filePath, Object currContent, Object givenContent) {
-        writeContents(filePath, "<<<<<<< HEAD\n", currContent, "\n", "=======\n", givenContent, ">>>>>>>");
+    private static void updateConflictFile(File filePath, Object currContent, Object givenContent, String name) {
+        writeContents(filePath, "<<<<<<< HEAD\n", currContent, "\n", "=======\n", givenContent, ">>>>>>>\n");
+        StageArea stageArea = readObject(STAGING_AREA_FILE, StageArea.class);
+        stageArea.addToAddition(name, sha1(readContents(filePath)));
     }
 }
