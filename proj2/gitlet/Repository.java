@@ -614,9 +614,9 @@ public class Repository {
                     if (!givenBranchMap.get(fileInCurrBranch).equals(splitPointMap.get(fileInCurrBranch))) {
                         // CONFLICT HERE
                         File currBranchBlob = join(BLOB_DIR, currBranchMap.get(fileInCurrBranch));
-                        byte[] contentInCurr = readContents(currBranchBlob);
+                        String contentInCurr = readContentsAsString(currBranchBlob);
                         File givenBranchBlob = join(BLOB_DIR, givenBranchMap.get(fileInCurrBranch));
-                        byte[] contentInGiven = readContents(givenBranchBlob);
+                        String contentInGiven = readContentsAsString(givenBranchBlob);
                         updateConflictFile(conflictFilePath, contentInCurr, contentInGiven);
                         isConflict = true;
                     }
@@ -633,8 +633,8 @@ public class Repository {
                         stageArea.addToRemoval(fileInCurrBranch);
                     } else {
                         File currBranchBlob = join(BLOB_DIR, currBranchMap.get(fileInCurrBranch));
-                        byte[] contentInCurr = readContents(currBranchBlob);
-                        updateConflictFile(conflictFilePath, contentInCurr, new byte[0]);
+                        String contentInCurr = readContentsAsString(currBranchBlob);
+                        updateConflictFile(conflictFilePath, contentInCurr, "");
                         isConflict = true;
                     }
                 }
@@ -650,8 +650,8 @@ public class Repository {
                 if (!currBranchMap.containsKey(fileInGivenBranch)) {
                     if (!givenBranchMap.get(fileInGivenBranch).equals(splitPointMap.get(fileInGivenBranch))) {
                         File givenBranchBlob = join(BLOB_DIR, givenBranchMap.get(fileInGivenBranch));
-                        byte[] contentInGiven = readContents(givenBranchBlob);
-                        updateConflictFile(conflictFilePath, new byte[0], contentInGiven);
+                        String contentInGiven = readContentsAsString(givenBranchBlob);
+                        updateConflictFile(conflictFilePath, "", contentInGiven);
                         isConflict = true;
                     }
                 }
@@ -666,7 +666,7 @@ public class Repository {
         }
     }
 
-    private static void updateConflictFile(File filePath, byte[] currContent, byte[] givenContent) {
+    private static void updateConflictFile(File filePath, Object currContent, Object givenContent) {
         writeContents(filePath, "<<<<<<< HEAD\n", currContent, "\n", "=======\n", givenContent, ">>>>>>>");
     }
 }
