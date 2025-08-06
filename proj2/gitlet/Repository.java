@@ -672,7 +672,7 @@ public class Repository {
     }
 
     private static void updateConflictFile(File filePath, Object currContent, Object givenContent, String name) {
-        writeContents(filePath, "<<<<<<< HEAD\n", currContent, "\n", "=======\n", givenContent, ">>>>>>>");
+        writeContents(filePath, "<<<<<<< HEAD\n", currContent, "\n", "=======\n", givenContent, ">>>>>>>\n");
         stageForAddition(name);
     }
 }
